@@ -8,6 +8,11 @@
     <string name="action_desvio">Culture</string>
     <string name="action_buraco">Map</string>
 
+    <string name="user_email">Email@gmail.com</string>
+    <string name="user_name">Name</string>
+
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+
+    <string name="checkable">...</string>
 </resources>

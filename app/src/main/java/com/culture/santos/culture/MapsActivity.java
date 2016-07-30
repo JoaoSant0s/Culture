@@ -36,7 +36,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -44,6 +43,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Location currentLocation;
 
     private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
     private Toolbar toolbar;
     private ActionBar actionBar;
 
@@ -51,6 +51,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private TimerTask timerTask;
     //we are going to use a handler to be able to run in our TimerTask
     final Handler handler = new Handler();
+
+    private boolean isChecked = false;
+
+    public void checkableEvent(View view){}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,9 +66,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         defineNavigationBar();
+
+        updateUserData();
     }
 
-    void defineNavigationBar(){
+    private void updateUserData(){
+        TextView userNameText = (TextView) navigationView.getHeaderView(0).findViewById(R.id.user_name_text);
+        TextView userEmailText = (TextView) navigationView.getHeaderView(0).findViewById(R.id.user_email_text);
+
+        userNameText.setText("Joao");
+        userEmailText.setText("Joao@email.com");
+    }
+
+    private void defineNavigationBar(){
         //setSupportActionBar(toolbar);
 
         actionBar = getSupportActionBar();
@@ -72,13 +86,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setHomeButtonEnabled(true);
 
-
         drawerLayout = (DrawerLayout) findViewById(R.id.navigation_drawer_layout);
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.navigation_view);
-        if (navigationView != null) {
-            setupNavigationDrawerContent(navigationView);
-        }
+        navigationView = (NavigationView) findViewById(R.id.navigation_view);
 
         setupNavigationDrawerContent(navigationView);
     }
@@ -88,19 +98,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
                         switch (menuItem.getItemId()) {
-                            case R.id.item_navigation_drawer_inbox:
-                                menuItem.setChecked(true);
+                            case R.id.favorite_events:
+                                //menuItem.setChecked(true);
                                 drawerLayout.closeDrawer(GravityCompat.START);
                                 // Alternative to Intent
                                 //Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
                                 //startActivity(intent);
                                 return true;
-                            case R.id.item_navigation_drawer_starred:
-                                menuItem.setChecked(true);
+                            case R.id.old_events:
                                 drawerLayout.closeDrawer(GravityCompat.START);
                                 return true;
-                            case R.id.item_navigation_drawer_sent_mail:
-                                menuItem.setChecked(true);
+                            case R.id.add_event:
+                                drawerLayout.closeDrawer(GravityCompat.START);
+                                return true;
+                            case R.id.remove_event:
+                                drawerLayout.closeDrawer(GravityCompat.START);
+                                return true;
+                            case R.id.edit_event:
                                 drawerLayout.closeDrawer(GravityCompat.START);
                                 return true;
                         }
@@ -124,18 +138,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         int id = item.getItemId();
 
         switch (id) {
-            case R.id.action_batida:
-                //  tupla.name = Constants.BATIDA;
-                return true;
-            case R.id.action_buraco:
-                //tupla.name = Constants.BURACO;
-                return true;
-            case R.id.action_desvio:
-                // tupla.name = Constants.DESVIO;
-                return true;
-            case R.id.action_passeata:
-                //tupla.name = Constants.PASSEATA;
-                return true;
+//            case R.id.action_batida:
+//                //  tupla.name = Constants.BATIDA;
+//                return true;
+//            case R.id.action_buraco:
+//                //tupla.name = Constants.BURACO;
+//                return true;
+//            case R.id.action_desvio:
+//                // tupla.name = Constants.DESVIO;
+//                return true;
+//            case R.id.action_passeata:
+//                //tupla.name = Constants.PASSEATA;
+//                return true;
             case R.id.home:
                 drawerLayout.openDrawer(GravityCompat.START);
                 return true;
@@ -167,6 +181,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setAlertDialogGPS();
         setUpMap();
         setMapActions();
+    }
+
+    public void createItem(View view){
+
     }
 
     private void setAlertDialogGPS(){

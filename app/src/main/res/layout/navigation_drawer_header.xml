@@ -8,14 +8,9 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scaleType="centerCrop" />
-
-    <ImageView
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="@dimen/navigation_drawer_header_margin"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:scaleType="centerCrop" />
+        android:scaleType="centerCrop"
+        android:id="@+id/background_header"
+        android:background="@drawable/header" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -30,17 +25,17 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center_vertical"
-            android:text="Desarrollador Android"
+            android:layout_gravity="left|bottom"
+            android:id="@+id/user_name_text"
+            android:text="@string/user_name"
             android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center_vertical"
-            android:text="thedahnark@gmail.com"
+            android:layout_gravity="left|bottom"
+            android:id="@+id/user_email_text"
+            android:text="@string/user_email"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
     </LinearLayout>

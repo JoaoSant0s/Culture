@@ -4,28 +4,30 @@
     <group android:checkableBehavior="single">
         <item
             android:checked="true"
-            android:id="@+id/item_navigation_drawer_inbox"
-            android:title="Inbox" />
-        <item
-            android:id="@+id/item_navigation_drawer_starred"
-            android:title="Starred" />
-        <item
-            android:id="@+id/item_navigation_drawer_sent_mail"
-            android:title="Sent mail" />
-        <item
-            android:id="@+id/item_navigation_drawer_drafts"
-            android:title="Drafts" />
+            android:id="@+id/favorite_events"
+            android:title="Favorite Events" />
     </group>
 
-    <item android:title="Subheader">
+    <item android:title="..."
+        android:id="@+id/header_menu">
         <menu>
             <item
-                android:id="@+id/item_navigation_drawer_settings"
-                android:title="Settings" />
+                android:id="@+id/old_events"
+                android:title="Old Events" />
             <item
-                android:id="@+id/item_navigation_drawer_help_and_feedback"
-                android:title="Help and feedback" />
+                android:id="@+id/add_event"
+                android:title="Add Event" />
+
+            <item
+                android:id="@+id/remove_event"
+                android:title="Remove Event" />
+            <item
+                android:id="@+id/edit_event"
+                android:title="Edit Event" />
         </menu>
     </item>
+
+
+
 
 </menu>
