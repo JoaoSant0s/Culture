@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Debug;
 import android.provider.Settings;
 
 import android.support.v4.app.ActivityCompat;
@@ -18,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.Menu;
 import android.os.Handler;
@@ -26,6 +28,11 @@ import android.widget.TextView;
 
 import android.support.design.widget.NavigationView;
 
+import com.firebase.client.ChildEventListener;
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -47,10 +54,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Toolbar toolbar;
     private ActionBar actionBar;
 
+    private View navegationViewHeader;
+
     private Timer timer;
     private TimerTask timerTask;
     //we are going to use a handler to be able to run in our TimerTask
     final Handler handler = new Handler();
+    private Firebase fireBase;
 
     private boolean isChecked = false;
 
@@ -60,27 +70,76 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        Firebase.setAndroidContext(this);
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
         mapFragment.getMapAsync(this);
-
-        defineNavigationBar();
-
-        updateUserData();
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
     }
 
-    private void updateUserData(){
-        TextView userNameText = (TextView) navigationView.getHeaderView(0).findViewById(R.id.user_name_text);
-        TextView userEmailText = (TextView) navigationView.getHeaderView(0).findViewById(R.id.user_email_text);
+    @Override
+    protected void onStart(){
+        super.onStart();
+        defineFireBase();
+        defineNavigationBar();
+        //updateUserData();
+    }
 
-        userNameText.setText("Joao");
-        userEmailText.setText("Joao@email.com");
+    private void defineFireBase(){
+
+        fireBase = new Firebase("https://culture-7b369.firebaseio.com/");
+
+        fireBase.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
+        });
+
+    }
+
+    private void updateUserData(String key, String model){
+        TextView text;
+        int id;
+        switch (key){
+            case "email":
+                id = R.id.user_email_text;
+                break;
+            case "name":
+                id = R.id.user_name_text;
+
+                break;
+            default:
+                id = 0;
+                break;
+        }
+        text = (TextView) navegationViewHeader.findViewById(id);
+
+        text.setText(model);
     }
 
     private void defineNavigationBar(){
-        //setSupportActionBar(toolbar);
-
         actionBar = getSupportActionBar();
         actionBar.setHomeAsUpIndicator(R.drawable.hamburguer);
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -89,6 +148,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         drawerLayout = (DrawerLayout) findViewById(R.id.navigation_drawer_layout);
 
         navigationView = (NavigationView) findViewById(R.id.navigation_view);
+        navegationViewHeader = navigationView.getHeaderView(0);
 
         setupNavigationDrawerContent(navigationView);
     }
@@ -240,8 +300,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void setMapActions(){
 
     }
-
-
 
     private void startTimer() {
         //set a new Timer

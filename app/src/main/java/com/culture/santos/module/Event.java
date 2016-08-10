@@ -23,6 +23,11 @@ public class Event {
     private ImageView eventCover;
     private Set<ImageView> eventPhotos;
 
+    public Event(){
+        eventPhotos = new HashSet<>();
+    }
+
+
     public String getName() {
         return name;
     }
@@ -87,7 +92,4 @@ public class Event {
         this.eventPhotos = eventPhotos;
     }
 
-    public Event(){
-        eventPhotos = new HashSet<>();
-    }
 }

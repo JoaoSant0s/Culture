@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "565492449392",
+    "firebase_url": "https://culture-7b369.firebaseio.com",
+    "project_id": "culture-7b369",
+    "storage_bucket": "culture-7b369.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565492449392:android:3f3f33d1e4ca14b5",
+        "android_client_info": {
+          "package_name": "com.culture.santos.culture"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "565492449392-6pakrgpk53lqvji7fqsgt5tp2lv0d1jc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.culture.santos.culture",
+            "certificate_hash": "2A424564A071E05FE8AAAD185FADFBCB901C674F"
+          }
+        },
+        {
+          "client_id": "565492449392-7b3iku140vnc1lj5bnir0h02pv64897e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9JJiZbmHsY0FZJSnwYxUryiqOBnYt-J4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "565492449392-7b3iku140vnc1lj5bnir0h02pv64897e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
