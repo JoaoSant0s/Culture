@@ -11,7 +11,9 @@ import android.location.LocationManager;
 import android.os.Debug;
 import android.provider.Settings;
 
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -33,21 +35,39 @@ import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
+import com.firebase.simplelogin.FirebaseSimpleLoginError;
+import com.firebase.simplelogin.FirebaseSimpleLoginUser;
+import com.firebase.simplelogin.SimpleLogin;
+import com.firebase.simplelogin.SimpleLoginAuthenticatedHandler;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.model.people.Person;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleMap mMap;
     private LocationManager locationManager;
     private Location currentLocation;
+    GoogleSignInAccount currentAccount;
+
+    private final int RC_SIGN_IN = 10;
 
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
@@ -61,8 +81,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     //we are going to use a handler to be able to run in our TimerTask
     final Handler handler = new Handler();
     private Firebase fireBase;
+    private GoogleApiClient mGoogleApiClient;
 
     private boolean isChecked = false;
+    private FirebaseAuth.AuthStateListener mAuthListener;
 
     public void checkableEvent(View view){}
 
@@ -71,17 +93,64 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         Firebase.setAndroidContext(this);
+        setGoogleEnvironment();
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+    }
+
+    private void setGoogleEnvironment(){
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this, this /* OnConnectionFailedListener */)
+                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                .build();
+
+        signIn();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
         mapFragment.getMapAsync(this);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+    }
+
+    private void signIn() {
+        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            handleSignInResult(result);
+        }
+    }
+
+    private void handleSignInResult(GoogleSignInResult result) {
+        if (result.isSuccess()) {
+            Log.d("isSuccess", "True");
+            currentAccount = result.getSignInAccount();
+
+            defineUserData();
+            defineFireBase();
+        } else {
+            Log.d("isSuccess", "False");
+        }
+    }
+
+    private void defineUserData() {
+        updateUserData("email", currentAccount.getEmail());
+        updateUserData("name", currentAccount.getDisplayName());
     }
 
     @Override
     protected void onStart(){
         super.onStart();
-        defineFireBase();
+        //defineFireBase();
         defineNavigationBar();
         //updateUserData();
     }
@@ -89,31 +158,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void defineFireBase(){
 
         fireBase = new Firebase("https://culture-7b369.firebaseio.com/");
-
-        fireBase.addChildEventListener(new ChildEventListener() {
+        fireBase.createUser(currentAccount.getEmail(), "correcthorsebatterystaple", new Firebase.ValueResultHandler<Map<String, Object>>() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
+            public void onSuccess(Map<String, Object> result) {
+                Log.d("Successfully created", "" + result.get("uid"));
             }
-
             @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(FirebaseError firebaseError) {
-
+            public void onError(FirebaseError firebaseError) {
+                // there was an error
             }
         });
 
@@ -326,4 +378,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d("onConnectionFailed", "True");
+    }
 }
