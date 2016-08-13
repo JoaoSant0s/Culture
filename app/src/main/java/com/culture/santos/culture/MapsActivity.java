@@ -1,100 +1,111 @@
 package com.culture.santos.culture;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationManager;
-import android.os.Debug;
-import android.provider.Settings;
-
+import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
+import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-
-import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.Menu;
-import android.os.Handler;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import android.support.design.widget.NavigationView;
-
-import com.firebase.client.ChildEventListener;
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
-import com.firebase.simplelogin.FirebaseSimpleLoginError;
-import com.firebase.simplelogin.FirebaseSimpleLoginUser;
-import com.firebase.simplelogin.SimpleLogin;
-import com.firebase.simplelogin.SimpleLoginAuthenticatedHandler;
+import com.culture.santos.adapter.FirebaseAdapter;
+import com.culture.santos.adapter.GoogleMapAdapter;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.plus.Plus;
-import com.google.android.gms.plus.model.people.Person;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
 
-    private GoogleMap mMap;
-    private LocationManager locationManager;
-    private Location currentLocation;
-    GoogleSignInAccount currentAccount;
+    private GoogleMapAdapter mMap;
 
     private final int RC_SIGN_IN = 10;
+    private GoogleSignInAccount currentAccount;
+    private GoogleApiClient mGoogleApiClient;
+    private FirebaseAdapter fireBase;
 
     private DrawerLayout drawerLayout;
+    private View navegationViewHeader;
     private NavigationView navigationView;
-    private Toolbar toolbar;
     private ActionBar actionBar;
 
-    private View navegationViewHeader;
-
+    private final Handler handler = new Handler();
     private Timer timer;
     private TimerTask timerTask;
-    //we are going to use a handler to be able to run in our TimerTask
-    final Handler handler = new Handler();
-    private Firebase fireBase;
-    private GoogleApiClient mGoogleApiClient;
-
-    private boolean isChecked = false;
-    private FirebaseAuth.AuthStateListener mAuthListener;
-
-    public void checkableEvent(View view){}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        Firebase.setAndroidContext(this);
+        fireBase = new FirebaseAdapter(this);
         setGoogleEnvironment();
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+    }
+
+    @Override
+    protected void onStart(){
+        super.onStart();
+        defineNavigationBar();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_SIGN_IN) {
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            handleSignInResult(result);
+        }
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        if(mMap.isEmpty()) return;
+        startTimer();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        switch (id) {
+            case R.id.home:
+                drawerLayout.openDrawer(GravityCompat.START);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = new GoogleMapAdapter(googleMap, this, LOCATION_SERVICE);
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d("onConnectionFailed", "True");
     }
 
     private void setGoogleEnvironment(){
@@ -119,56 +130,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
-        if (requestCode == RC_SIGN_IN) {
-            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult(result);
-        }
-    }
-
     private void handleSignInResult(GoogleSignInResult result) {
         if (result.isSuccess()) {
-            Log.d("isSuccess", "True");
             currentAccount = result.getSignInAccount();
-
             defineUserData();
-            defineFireBase();
-        } else {
-            Log.d("isSuccess", "False");
+            fireBase.defineFireBase();
         }
     }
 
     private void defineUserData() {
         updateUserData("email", currentAccount.getEmail());
         updateUserData("name", currentAccount.getDisplayName());
-    }
-
-    @Override
-    protected void onStart(){
-        super.onStart();
-        //defineFireBase();
-        defineNavigationBar();
-        //updateUserData();
-    }
-
-    private void defineFireBase(){
-
-        fireBase = new Firebase("https://culture-7b369.firebaseio.com/");
-        fireBase.createUser(currentAccount.getEmail(), "correcthorsebatterystaple", new Firebase.ValueResultHandler<Map<String, Object>>() {
-            @Override
-            public void onSuccess(Map<String, Object> result) {
-                Log.d("Successfully created", "" + result.get("uid"));
-            }
-            @Override
-            public void onError(FirebaseError firebaseError) {
-                // there was an error
-            }
-        });
-
     }
 
     private void updateUserData(String key, String model){
@@ -207,158 +179,43 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void setupNavigationDrawerContent(NavigationView navigationView) {
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(MenuItem menuItem) {
-                        switch (menuItem.getItemId()) {
-                            case R.id.favorite_events:
-                                //menuItem.setChecked(true);
-                                drawerLayout.closeDrawer(GravityCompat.START);
-                                // Alternative to Intent
-                                //Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-                                //startActivity(intent);
-                                return true;
-                            case R.id.old_events:
-                                drawerLayout.closeDrawer(GravityCompat.START);
-                                return true;
-                            case R.id.add_event:
-                                drawerLayout.closeDrawer(GravityCompat.START);
-                                return true;
-                            case R.id.remove_event:
-                                drawerLayout.closeDrawer(GravityCompat.START);
-                                return true;
-                            case R.id.edit_event:
-                                drawerLayout.closeDrawer(GravityCompat.START);
-                                return true;
-                        }
+            @Override
+            public boolean onNavigationItemSelected(MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.favorite_events:
+                        //menuItem.setChecked(true);
+                        drawerLayout.closeDrawer(GravityCompat.START);
+                        // Alternative to Intent
+                        //Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                        //startActivity(intent);
                         return true;
-                    }
-                });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        switch (id) {
-//            case R.id.action_batida:
-//                //  tupla.name = Constants.BATIDA;
-//                return true;
-//            case R.id.action_buraco:
-//                //tupla.name = Constants.BURACO;
-//                return true;
-//            case R.id.action_desvio:
-//                // tupla.name = Constants.DESVIO;
-//                return true;
-//            case R.id.action_passeata:
-//                //tupla.name = Constants.PASSEATA;
-//                return true;
-            case R.id.home:
-                drawerLayout.openDrawer(GravityCompat.START);
+                    case R.id.old_events:
+                        drawerLayout.closeDrawer(GravityCompat.START);
+                        return true;
+                    case R.id.add_event:
+                        drawerLayout.closeDrawer(GravityCompat.START);
+                        return true;
+                    case R.id.remove_event:
+                        drawerLayout.closeDrawer(GravityCompat.START);
+                        return true;
+                    case R.id.edit_event:
+                        drawerLayout.closeDrawer(GravityCompat.START);
+                        return true;
+                }
                 return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    protected void onResume(){
-        super.onResume();
-        if(mMap == null) return;
-        startTimer();
-    }
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        locationManager = (LocationManager) this.getSystemService(LOCATION_SERVICE);
-        setAlertDialogGPS();
-        setUpMap();
-        setMapActions();
-    }
-
-    public void createItem(View view){
-
-    }
-
-    private void setAlertDialogGPS(){
-        if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) return;
-
-        // Build the alert dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Location Services Not Active");
-        builder.setMessage("Please enable Location Services and GPS");
-        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialogInterface, int i) {
-                // Show location settings when the user acknowledges the alert dialog
-                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivity(intent);
             }
         });
-        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-            }
-        });
-        Dialog alertDialog = builder.create();
-        alertDialog.setCanceledOnTouchOutside(false);
-        alertDialog.show();
     }
 
-    private void setUpMap() {
-        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) return;
-        currentLocation = locationManager.getLastKnownLocation(locationManager.getBestProvider(new Criteria(), false));
-
-        LatLng state = (currentLocation == null) ? (new LatLng(0, 50)) : (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(state));
-        if((currentLocation != null)) mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
-        mMap.getUiSettings().setZoomControlsEnabled(true);
-        mMap.getUiSettings().setMyLocationButtonEnabled(true);
-        checkPermission();
+    public void alertDialogGPS(Intent intent){
+        startActivity(intent);
     }
 
-    private void checkPermission(){
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        mMap.setMyLocationEnabled(true);
-    }
-
-    private void setMapActions(){
-
-    }
+    private void setMapActions(){}
 
     private void startTimer() {
-        //set a new Timer
         timer = new Timer();
-        //initialize the TimerTask's job
         initializeTimerTask();
-        //schedule the timer, after the first 1000ms the TimerTask will run every 10000ms
         timer.schedule(timerTask, 1000, 2000); //
     }
 
@@ -368,7 +225,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //use a handler to run a toast that shows the current timestamp
                 handler.post(new Runnable() {
                     public void run() {
-                        setUpMap();
+                        mMap.setUpMap();
                         timer.cancel();
                         timerTask.cancel();
                     }
@@ -378,8 +235,5 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.d("onConnectionFailed", "True");
-    }
+
 }
