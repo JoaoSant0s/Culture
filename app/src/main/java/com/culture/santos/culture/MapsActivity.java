@@ -17,10 +17,8 @@ import android.widget.TextView;
 
 import com.culture.santos.adapter.FirebaseAdapter;
 import com.culture.santos.adapter.GoogleMapAdapter;
-import com.google.android.gms.auth.api.Auth;
+import com.culture.santos.adapter.GoogleSignInAdapter;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.GoogleMap;
@@ -30,15 +28,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import java.util.Timer;
 import java.util.TimerTask;
 
-
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
-
-    private GoogleMapAdapter mMap;
-
-    private final int RC_SIGN_IN = 10;
-    private GoogleSignInAccount currentAccount;
-    private GoogleApiClient mGoogleApiClient;
-    private FirebaseAdapter fireBase;
 
     private DrawerLayout drawerLayout;
     private View navegationViewHeader;
@@ -49,12 +39,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Timer timer;
     private TimerTask timerTask;
 
+    private GoogleMapAdapter mMap;
+    private FirebaseAdapter fireBase;
+    private GoogleSignInAdapter googleSign;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         fireBase = new FirebaseAdapter(this);
-        setGoogleEnvironment();
+        googleSign = new GoogleSignInAdapter(this);
+        setMapFragmentEnvironment();
+    }
+
+    private void setMapFragmentEnvironment(){
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
     }
 
     @Override
@@ -66,15 +66,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RC_SIGN_IN) {
-            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult(result);
-        }
+        googleSign.handleResult(requestCode, data);
+        if(!googleSign.isSuccess()) return;
+        defineUserData();
+        fireBase.defineFireBase();
     }
 
     @Override
     protected void onResume(){
         super.onResume();
+        if(mMap == null)return;
         if(mMap.isEmpty()) return;
         startTimer();
     }
@@ -108,43 +109,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Log.d("onConnectionFailed", "True");
     }
 
-    private void setGoogleEnvironment(){
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this, this /* OnConnectionFailedListener */)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                .build();
-
-        signIn();
-
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-
-        mapFragment.getMapAsync(this);
-    }
-
-    private void signIn() {
-        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
-        startActivityForResult(signInIntent, RC_SIGN_IN);
-    }
-
-    private void handleSignInResult(GoogleSignInResult result) {
-        if (result.isSuccess()) {
-            currentAccount = result.getSignInAccount();
-            defineUserData();
-            fireBase.defineFireBase();
-        }
+    public void signIn(Intent signInIntent, int rcSign) {
+        startActivityForResult(signInIntent, rcSign);
     }
 
     private void defineUserData() {
+        GoogleSignInAccount currentAccount = googleSign.getCurrentAccount();
         updateUserData("email", currentAccount.getEmail());
         updateUserData("name", currentAccount.getDisplayName());
     }
 
     private void updateUserData(String key, String model){
-        TextView text;
+
         int id;
         switch (key){
             case "email":
@@ -152,14 +128,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
             case "name":
                 id = R.id.user_name_text;
-
                 break;
             default:
                 id = 0;
                 break;
         }
-        text = (TextView) navegationViewHeader.findViewById(id);
-
+        TextView text = (TextView) navegationViewHeader.findViewById(id);
         text.setText(model);
     }
 
