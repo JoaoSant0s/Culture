@@ -4,6 +4,7 @@ import android.location.Location;
 import android.provider.ContactsContract;
 import android.widget.ImageView;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,7 +14,7 @@ import java.util.Set;
  */
 public class Event {
     private String name;
-    private Date date;
+    private Calendar date;
     private Location location;
 
     private String reference;
@@ -23,7 +24,15 @@ public class Event {
     private ImageView eventCover;
     private Set<ImageView> eventPhotos;
 
-    public Event(){
+    public Event(String newName, Calendar newDate, Location newLocation, String newReference, String newDescription,String newFacebookLink){
+        this.name = newName;
+        this.date = newDate;
+        this.location = newLocation;
+
+        this.reference = newReference;
+        this.description = newDescription;
+        this.facebookLink = newFacebookLink;
+
         eventPhotos = new HashSet<>();
     }
 
@@ -36,11 +45,11 @@ public class Event {
         this.name = name;
     }
 
-    public Date getDate() {
+    public Calendar getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(Calendar date) {
         this.date = date;
     }
 

@@ -168,6 +168,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         return true;
                     case R.id.add_event:
                         drawerLayout.closeDrawer(GravityCompat.START);
+                        Intent intent = new Intent(MapsActivity.this, CreateEventActivity.class);
+                        startActivity(intent);
                         return true;
                     case R.id.remove_event:
                         drawerLayout.closeDrawer(GravityCompat.START);

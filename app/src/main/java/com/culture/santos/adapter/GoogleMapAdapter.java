@@ -6,16 +6,25 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 
 import com.culture.santos.culture.MapsActivity;
 import com.culture.santos.culture.R;
+import com.google.android.gms.identity.intents.Address;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Ricar on 13/08/2016.
@@ -35,6 +44,50 @@ public class GoogleMapAdapter {
         setAlertDialogGPS();
         setUpMap();
         setMapActions();
+
+
+        googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                try {
+                    createMaker(latLng);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //saveMaker(latLng);
+            }
+        });
+
+        /*googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(final Marker marker) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle(marker.getTitle());
+                builder.setMessage(marker.getSnippet());
+                builder.setPositiveButton(R.string.action_remove, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        removeMarker(marker.getPosition());
+                        marker.remove();
+                    }
+                });
+                builder.setNegativeButton(R.string.action_cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                });
+                builder.show();
+                return true;
+            }
+        });*/
+
+    }
+
+    private void createMaker(LatLng latLng) throws IOException {
+        Geocoder gc = new Geocoder(this.context.getBaseContext(), Locale.getDefault());
+        List<android.location.Address> fromLocation = gc.getFromLocation(latLng.latitude, latLng.longitude, 1);
+        if (!fromLocation.isEmpty()) {
+            android.location.Address en = fromLocation.get(0);
+            //googleMap.addMarker(new MarkerOptions().position(latLng).title(tupla.name).snippet(en.getAddressLine(0)).icon(BitmapDescriptorFactory.defaultMarker(tupla.getColorAviso())));
+        }
     }
 
     public boolean isEmpty(){
