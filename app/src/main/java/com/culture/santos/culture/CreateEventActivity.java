@@ -1,6 +1,8 @@
 package com.culture.santos.culture;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.location.Location;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +23,7 @@ import java.util.Date;
 public class CreateEventActivity extends AppCompatActivity {
 
     private DatePickerDialog datePickerDialog;
+    public static String CURRETEN_MARCKER = "CURRENT_MARKER";
 
     EditText edtName;
 
@@ -86,9 +89,19 @@ public class CreateEventActivity extends AppCompatActivity {
         },newCalendar.get(Calendar.YEAR), newCalendar.get(Calendar.MONTH), newCalendar.get(Calendar.DAY_OF_MONTH));
     }
 
-    private void createEvent(){
-        //Event newEvent = new Event(edtName.getText(), auxDate, new Location(this), edtReferenceLocation.getText(), edtDescription.getText(), edtExternalLinks.getText());
+    public void createEvent(View view){
+       // Event newEvent = new Event(edtName.getText(), auxDate, new Location(this), edtReferenceLocation.getText(), edtDescription.getText(), edtExternalLinks.getText());
 
+        setResult(Activity.RESULT_OK);
+        finish();
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        // When the user hits the back button set the resultCode
+        // to Activity.RESULT_CANCELED to indicate a failure
+        setResult(Activity.RESULT_CANCELED);
+        super.onBackPressed();
     }
 }

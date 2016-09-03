@@ -1,5 +1,6 @@
 package com.culture.santos.adapter;
 
+import android.app.Activity;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -12,6 +13,7 @@ import android.location.LocationManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.culture.santos.culture.CreateEventActivity;
 import com.culture.santos.culture.MapsActivity;
@@ -32,6 +34,8 @@ import java.util.Locale;
  * Created by Ricar on 13/08/2016.
  */
 public class GoogleMapAdapter {
+
+    private static final int REQUEST_CODE_CREATE_MARKER = 0x9345;
 
     private GoogleMap mMap;
     private LocationManager locationManager;
@@ -65,6 +69,16 @@ public class GoogleMapAdapter {
             }
         });
     }
+    public void handleResult(int requestCode, int resultCode, Intent data){
+        if(requestCode == REQUEST_CODE_CREATE_MARKER) {
+            if(resultCode == Activity.RESULT_OK) {
+                Toast.makeText(this.context, "Result: OK", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this.context, "Result: FAIL", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
 
     private void markerAddEvent(LatLng latLng) {
         if(!this.context.getState().isAddEventState()) return;
@@ -101,10 +115,12 @@ public class GoogleMapAdapter {
         List<android.location.Address> fromLocation = gc.getFromLocation(latLng.latitude, latLng.longitude, 1);
         if (!fromLocation.isEmpty()) {
             android.location.Address en = fromLocation.get(0);
-            this.mMap.addMarker(new MarkerOptions().position(latLng).title("Teste").snippet(en.getAddressLine(0)));
+            Marker currentMarker = this.mMap.addMarker(new MarkerOptions().position(latLng).title("Teste").snippet(en.getAddressLine(0)));
 
             Intent intent = new Intent(this.context, CreateEventActivity.class);
-            this.context.startActivity(intent);
+            this.context.getEventsAdapter().setMarker(currentMarker);
+
+            this.context.startActivityForResult(intent, REQUEST_CODE_CREATE_MARKER);
 
             context.getState().setInitState();
         }

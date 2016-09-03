@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.culture.santos.adapter.EventAdapter;
 import com.culture.santos.adapter.FirebaseAdapter;
 import com.culture.santos.adapter.GoogleMapAdapter;
 import com.culture.santos.adapter.GoogleSignInAdapter;
@@ -44,6 +45,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMapAdapter mMap;
     private FirebaseAdapter fireBase;
     private GoogleSignInAdapter googleSign;
+    private EventAdapter eventsAdapter;
 
     private State state;
 
@@ -53,6 +55,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_maps);
         fireBase = new FirebaseAdapter(this);
         googleSign = new GoogleSignInAdapter(this);
+        eventsAdapter = new EventAdapter();
 
         state = new State(this);
 
@@ -62,6 +65,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public State getState(){
         return state;
     }
+    public EventAdapter getEventsAdapter(){return eventsAdapter;}
 
     private void setMapFragmentEnvironment(){
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -78,6 +82,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         googleSign.handleResult(requestCode, data);
+
+        mMap.handleResult(requestCode, resultCode, data);
         if(!googleSign.isSuccess()) return;
         defineUserData();
         fireBase.defineFireBase();
