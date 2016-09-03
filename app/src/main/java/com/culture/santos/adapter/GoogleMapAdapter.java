@@ -1,6 +1,6 @@
 package com.culture.santos.adapter;
 
-import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,6 +13,7 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
+import com.culture.santos.culture.CreateEventActivity;
 import com.culture.santos.culture.MapsActivity;
 import com.culture.santos.culture.R;
 import com.google.android.gms.identity.intents.Address;
@@ -20,6 +21,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
@@ -46,47 +48,65 @@ public class GoogleMapAdapter {
         setMapActions();
 
 
-        googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+        this.mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                try {
-                    createMaker(latLng);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                //saveMaker(latLng);
+                Log.d("Click", "Event");
+                markerAddEvent(latLng);
             }
         });
 
-        /*googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+        this.mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(final Marker marker) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle(marker.getTitle());
-                builder.setMessage(marker.getSnippet());
-                builder.setPositiveButton(R.string.action_remove, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        removeMarker(marker.getPosition());
-                        marker.remove();
-                    }
-                });
-                builder.setNegativeButton(R.string.action_cancel, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                    }
-                });
-                builder.show();
+                Log.d("Click", "Marker");
+                markerClickEvent(marker);
                 return true;
             }
-        });*/
-
+        });
     }
 
-    private void createMaker(LatLng latLng) throws IOException {
+    private void markerAddEvent(LatLng latLng) {
+        if(!this.context.getState().isAddEventState()) return;
+
+        try {
+            createMarker(latLng);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void markerClickEvent(final Marker marker){
+        if(!this.context.getState().isRemoveEventState()) return;
+
+        Builder builder = new Builder(this.context);
+        builder.setTitle(marker.getTitle());
+        builder.setMessage(marker.getSnippet());
+        builder.setPositiveButton(R.string.remove, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                marker.remove();
+                context.getState().setInitState();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                context.getState().setInitState();
+            }
+        });
+        builder.show();
+    }
+
+    private void createMarker(LatLng latLng) throws IOException {
         Geocoder gc = new Geocoder(this.context.getBaseContext(), Locale.getDefault());
         List<android.location.Address> fromLocation = gc.getFromLocation(latLng.latitude, latLng.longitude, 1);
         if (!fromLocation.isEmpty()) {
             android.location.Address en = fromLocation.get(0);
-            //googleMap.addMarker(new MarkerOptions().position(latLng).title(tupla.name).snippet(en.getAddressLine(0)).icon(BitmapDescriptorFactory.defaultMarker(tupla.getColorAviso())));
+            this.mMap.addMarker(new MarkerOptions().position(latLng).title("Teste").snippet(en.getAddressLine(0)));
+
+            Intent intent = new Intent(this.context, CreateEventActivity.class);
+            this.context.startActivity(intent);
+
+            context.getState().setInitState();
         }
     }
 
@@ -98,7 +118,7 @@ public class GoogleMapAdapter {
         if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) return;
 
         // Build the alert dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this.context);
+        Builder builder = new Builder(this.context);
         builder.setTitle("Location Services Not Active");
         builder.setMessage("Please enable Location Services and GPS");
         builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {

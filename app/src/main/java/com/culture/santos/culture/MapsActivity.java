@@ -18,6 +18,8 @@ import android.widget.TextView;
 import com.culture.santos.adapter.FirebaseAdapter;
 import com.culture.santos.adapter.GoogleMapAdapter;
 import com.culture.santos.adapter.GoogleSignInAdapter;
+import com.culture.santos.module.State;
+import com.culture.santos.module.StateManager;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -43,13 +45,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FirebaseAdapter fireBase;
     private GoogleSignInAdapter googleSign;
 
+    private State state;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         fireBase = new FirebaseAdapter(this);
         googleSign = new GoogleSignInAdapter(this);
+
+        state = new State(this);
+
         setMapFragmentEnvironment();
+    }
+
+    public State getState(){
+        return state;
     }
 
     private void setMapFragmentEnvironment(){
@@ -156,26 +167,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onNavigationItemSelected(MenuItem menuItem) {
                 switch (menuItem.getItemId()) {
-                    case R.id.favorite_events:
-                        //menuItem.setChecked(true);
+                    case R.id.list_events:
                         drawerLayout.closeDrawer(GravityCompat.START);
-                        // Alternative to Intent
-                        //Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-                        //startActivity(intent);
-                        return true;
-                    case R.id.old_events:
-                        drawerLayout.closeDrawer(GravityCompat.START);
+                        state.setListEventState();
                         return true;
                     case R.id.add_event:
                         drawerLayout.closeDrawer(GravityCompat.START);
-                        Intent intent = new Intent(MapsActivity.this, CreateEventActivity.class);
-                        startActivity(intent);
+                        state.setAddEventState();
                         return true;
                     case R.id.remove_event:
                         drawerLayout.closeDrawer(GravityCompat.START);
+                        state.setRemoveEventState();
                         return true;
                     case R.id.edit_event:
                         drawerLayout.closeDrawer(GravityCompat.START);
+                        state.setEditEventState();
                         return true;
                 }
                 return true;
