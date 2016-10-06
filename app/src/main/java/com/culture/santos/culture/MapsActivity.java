@@ -19,6 +19,7 @@ import com.culture.santos.adapter.EventAdapter;
 import com.culture.santos.adapter.FirebaseAdapter;
 import com.culture.santos.adapter.GoogleMapAdapter;
 import com.culture.santos.adapter.GoogleSignInAdapter;
+import com.culture.santos.adapter.TutorialAdapter;
 import com.culture.santos.module.State;
 import com.culture.santos.module.StateManager;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -46,6 +47,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FirebaseAdapter fireBase;
     private GoogleSignInAdapter googleSign;
     private EventAdapter eventsAdapter;
+    private TutorialAdapter tutorialAdapter;
 
     private State state;
 
@@ -56,16 +58,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         fireBase = new FirebaseAdapter(this);
         googleSign = new GoogleSignInAdapter(this);
         eventsAdapter = new EventAdapter();
+        tutorialAdapter = new TutorialAdapter(this);
 
         state = new State(this);
 
         setMapFragmentEnvironment();
+
     }
 
     public State getState(){
         return state;
     }
     public EventAdapter getEventsAdapter(){return eventsAdapter;}
+    public TutorialAdapter getTutorialAdapter(){return tutorialAdapter;}
 
     private void setMapFragmentEnvironment(){
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -110,6 +115,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch (id) {
             case R.id.home:
                 drawerLayout.openDrawer(GravityCompat.START);
+                return true;
+            case R.id.action_tutorial:
+                state.setAddEventTutorial();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

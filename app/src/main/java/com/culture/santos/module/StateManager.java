@@ -8,6 +8,7 @@ import com.culture.santos.culture.MapsActivity;
 import java.util.Observable;
 import java.util.Observer;
 import com.culture.santos.module.State.States;
+import com.culture.santos.module.State.StatesTutorial;
 
 /**
  * Created by Ricar on 02/09/2016.
@@ -27,9 +28,11 @@ public class StateManager implements Observer {
 
     @Override
     public void update(Observable observable, Object data) {
-        States someVariable = ((State) observable).getState();
+        States currentState = ((State) observable).getState();
+        StatesTutorial tutorialState = ((State) observable).getStateTutorial();
+        String toastMessage = currentState.toString() + " " +  tutorialState.toString();
 
-        Toast toast = Toast.makeText(this.mapsContext, someVariable.toString(), Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(this.mapsContext, toastMessage, Toast.LENGTH_SHORT);
         toast.show();
     }
 }

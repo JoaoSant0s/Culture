@@ -2,7 +2,7 @@
     <string name="app_name">Culture</string>
     <string name="title_activity_maps">Map</string>
 
-    <string name="action_batida">Culture</string>
+    <string name="action_tutorial">Tutorial</string>
     <string name="action_passeata">Map</string>
 
     <string name="action_desvio">Culture</string>

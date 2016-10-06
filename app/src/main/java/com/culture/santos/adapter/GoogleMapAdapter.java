@@ -114,6 +114,7 @@ public class GoogleMapAdapter {
         Geocoder gc = new Geocoder(this.context.getBaseContext(), Locale.getDefault());
         List<android.location.Address> fromLocation = gc.getFromLocation(latLng.latitude, latLng.longitude, 1);
         if (!fromLocation.isEmpty()) {
+            this.context.getTutorialAdapter().hideAddEventTutorial();
             android.location.Address en = fromLocation.get(0);
             Marker currentMarker = this.mMap.addMarker(new MarkerOptions().position(latLng).title("Teste").snippet(en.getAddressLine(0)));
 

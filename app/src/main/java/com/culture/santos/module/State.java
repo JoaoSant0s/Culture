@@ -1,5 +1,7 @@
 package com.culture.santos.module;
 
+import android.util.Log;
+
 import com.culture.santos.culture.MapsActivity;
 
 import java.util.Observable;
@@ -15,29 +17,43 @@ public class State extends Observable {
         RemoveState,
         ListState,
         EditState
-
     }
 
-    public States currentState;
+    public enum StatesTutorial{
+        Disable,
+        AddEvent
+    }
+
+    private States currentState;
+    private StatesTutorial currentStateTutorial;
 
     private StateManager stateManager;
-
-    public State(MapsActivity initContext){
-        stateManager = new StateManager(initContext, this);
-        setInitState();
-    }
+    private MapsActivity cxt;
 
     public States getState(){
         return currentState;
     }
+    public StatesTutorial getStateTutorial(){
+        return currentStateTutorial;
+    }
+
+    public State(MapsActivity initContext){
+        cxt = initContext;
+        stateManager = new StateManager(initContext, this);
+        setInitState();
+    }
 
     public void setAddEventState(){
+        if(isAddEventStateTutorial()) cxt.getTutorialAdapter().showAddEventTutorial();
         synchronized (this) {currentState = States.AddEvent;}
         notifyChanged();
     }
 
     public void setInitState(){
-        synchronized (this) {currentState = States.InitState;}
+        synchronized (this) {
+            currentState = States.InitState;
+            currentStateTutorial = StatesTutorial.Disable;
+        }
         notifyChanged();
     }
 
@@ -55,6 +71,28 @@ public class State extends Observable {
         synchronized (this) {currentState = States.ListState;}
         notifyChanged();
     }
+
+    public void setDisableTutorial(){
+        synchronized (this) {currentStateTutorial = StatesTutorial.Disable;}
+        notifyChanged();
+    }
+
+    public void setAddEventTutorial(){
+        synchronized (this) {
+            Log.d("BEFORE", currentStateTutorial.toString());
+            if(isDisableEventStateTutorial()){
+                currentStateTutorial = StatesTutorial.AddEvent;
+            }else if(isAddEventStateTutorial()){
+                currentStateTutorial = StatesTutorial.Disable;
+            }
+            Log.d("AFTER", currentStateTutorial.toString());
+        }
+        notifyChanged();
+    }
+
+    public boolean isAddEventStateTutorial(){return (currentStateTutorial == StatesTutorial.AddEvent);}
+
+    public boolean isDisableEventStateTutorial(){return (currentStateTutorial == StatesTutorial.Disable);}
 
     public boolean isAddEventState(){
         return (currentState == States.AddEvent);
