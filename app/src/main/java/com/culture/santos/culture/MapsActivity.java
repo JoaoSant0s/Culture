@@ -1,6 +1,7 @@
 package com.culture.santos.culture;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -34,6 +35,8 @@ import java.util.TimerTask;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
 
+    public final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+    public final int PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 2;
     private DrawerLayout drawerLayout;
     private View navegationViewHeader;
     private NavigationView navigationView;
@@ -126,12 +129,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = new GoogleMapAdapter(googleMap, this, LOCATION_SERVICE);
+        mMap = new GoogleMapAdapter(googleMap, this, this.LOCATION_SERVICE);
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d("onConnectionFailed", "True");
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    mMap.setUpMap();
+                } else {
+                    Log.d("MUST ACCEPT", "MUST ACCEPT");
+                }
+                return;
+            }
+            case PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION:{
+
+            }
+        }
     }
 
     public void signIn(Intent signInIntent, int rcSign) {

@@ -10,6 +10,7 @@ import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Debug;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -25,6 +26,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.location.LocationServices;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,7 +38,6 @@ import java.util.Locale;
 public class GoogleMapAdapter {
 
     private static final int REQUEST_CODE_CREATE_MARKER = 0x9345;
-
     private GoogleMap mMap;
     private LocationManager locationManager;
     private Location currentLocation;
@@ -155,8 +156,11 @@ public class GoogleMapAdapter {
     }
 
     public void setUpMap() {
-        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) return;
-        currentLocation = locationManager.getLastKnownLocation(locationManager.getBestProvider(new Criteria(), false));
+        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) return;
+        if(!checkPermission()) return;
+        String provider = locationManager.getBestProvider(new Criteria(), true);
+
+        currentLocation = locationManager.getLastKnownLocation(provider);
 
         LatLng state = (currentLocation == null) ? (new LatLng(0, 50)) : (new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
 
@@ -164,21 +168,16 @@ public class GoogleMapAdapter {
         if((currentLocation != null)) mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
-        checkPermission();
+        mMap.setMyLocationEnabled(true);
     }
 
-    private void checkPermission(){
-        if (ActivityCompat.checkSelfPermission(this.context, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this.context, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+    private boolean checkPermission(){
+        if (ActivityCompat.checkSelfPermission(this.context, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this.context, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, this.context.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            return false;
         }
-        mMap.setMyLocationEnabled(true);
+        return true;
+
     }
 
     private void setMapActions() {
