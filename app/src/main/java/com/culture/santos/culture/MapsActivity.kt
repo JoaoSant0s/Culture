@@ -3,6 +3,7 @@ package com.culture.santos.culture
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
 import android.support.design.widget.NavigationView
@@ -16,12 +17,8 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 
-import com.culture.santos.adapter.EventAdapter
-import com.culture.santos.adapter.FirebaseAdapter
 import com.culture.santos.adapter.GoogleMapAdapter
 import com.culture.santos.adapter.GoogleSignInAdapter
-import com.culture.santos.adapter.TutorialAdapter
-import com.culture.santos.module.State
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.maps.GoogleMap
@@ -35,6 +32,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
 
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     val PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 2
+
     private var drawerLayout: DrawerLayout? = null
     private var navegationViewHeader: View? = null
     private var navigationView: NavigationView? = null
@@ -45,27 +43,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
     private var timerTask: TimerTask? = null
 
     private var mMap: GoogleMapAdapter? = null
-    private var fireBase: FirebaseAdapter? = null
     private var googleSign: GoogleSignInAdapter? = null
-    var eventsAdapter: EventAdapter? = null
-        private set
-    var tutorialAdapter: TutorialAdapter? = null
-        private set
 
-    var state: State? = null
-        private set
+    var locationManager: LocationManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-        state = State(this)
 
-        fireBase = FirebaseAdapter(this)
+        locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         googleSign = GoogleSignInAdapter(this)
-        eventsAdapter = EventAdapter()
-        tutorialAdapter = TutorialAdapter(this)
 
         setMapFragmentEnvironment()
+    }
+
+    fun haveGPSandNETWORK(): Boolean {
+        return locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER) && locationManager!!.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
     private fun setMapFragmentEnvironment() {
@@ -85,14 +78,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
         mMap?.handleResult(requestCode, resultCode, data)
         if (!googleSign!!.isSuccess) return
         defineUserData()
-        fireBase?.defineFireBase()
     }
 
     override fun onResume() {
         super.onResume()
         if (mMap == null) return
         if (!mMap?.isEmpty!!) return
-        startTimer()
+        //startTimer()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -109,7 +101,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
                 return true
             }
             R.id.action_tutorial -> {
-                state?.setAddEventTutorial()
                 return true
             }
             else -> return super.onOptionsItemSelected(item)
@@ -117,7 +108,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
-        mMap = GoogleMapAdapter(googleMap, this, Context.LOCATION_SERVICE)
+        mMap = GoogleMapAdapter(googleMap, this)
+        mMap?.setAlertDialogGPS();
     }
 
     override fun onConnectionFailed(connectionResult: ConnectionResult) {
@@ -129,6 +121,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
             PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
                 if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mMap?.setUpMap()
+                    mMap?.setAlertDialogGPS()
                 } else {
                     Log.d("MUST ACCEPT", "MUST ACCEPT")
                 }
@@ -137,6 +130,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
             PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION -> {
                 if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mMap?.setUpMap()
+                    mMap?.setAlertDialogGPS()
                 } else {
                     Log.d("MUST ACCEPT", "MUST ACCEPT")
                 }
@@ -186,22 +180,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
             when (menuItem.itemId) {
                 R.id.list_events -> {
                     drawerLayout?.closeDrawer(GravityCompat.START)
-                    state?.setListEventState()
                     return@OnNavigationItemSelectedListener true
                 }
                 R.id.add_event -> {
                     drawerLayout?.closeDrawer(GravityCompat.START)
-                    state?.setAddEventState()
                     return@OnNavigationItemSelectedListener true
                 }
                 R.id.remove_event -> {
                     drawerLayout?.closeDrawer(GravityCompat.START)
-                    state?.setRemoveEventState()
                     return@OnNavigationItemSelectedListener true
                 }
                 R.id.edit_event -> {
                     drawerLayout?.closeDrawer(GravityCompat.START)
-                    state?.setEditEventState()
                     return@OnNavigationItemSelectedListener true
                 }
             }
