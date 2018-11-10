@@ -1,5 +1,6 @@
 package com.culture.santos.adapter
 
+
 import android.app.Activity
 import android.app.AlertDialog.Builder
 import android.content.Intent
@@ -7,7 +8,9 @@ import android.content.pm.PackageManager
 import android.location.Criteria
 import android.location.Geocoder
 import android.location.Location
-import android.location.LocationManager
+import android.location.LocationListener
+import android.os.Bundle
+import android.os.Debug
 import android.provider.Settings
 import android.support.v4.app.ActivityCompat
 import android.util.Log
@@ -20,7 +23,6 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.location.LocationListener
 
 import java.io.IOException
 import java.util.Locale
@@ -31,7 +33,6 @@ import java.util.Locale
  */
 class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsActivity) {
     private var currentLocation: Location? = null
-    private var locationChangeListener : LocationListener ? = null
 
     val isEmpty: Boolean
         get() = this.mMap == null
@@ -54,7 +55,6 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         }
     }
 
-
     fun handleResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (requestCode == REQUEST_CODE_CREATE_MARKER) {
             if (resultCode == Activity.RESULT_OK) {
@@ -65,12 +65,21 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         }
     }
 
-
     private fun markerAddEvent(latLng: LatLng) {
         try {
             createMarker(latLng)
         } catch (e: IOException) {
             e.printStackTrace()
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun createMarker(latLng: LatLng) {
+        val gc = Geocoder(this.context.baseContext, Locale.getDefault())
+        val fromLocation = gc.getFromLocation(latLng.latitude, latLng.longitude, 1)
+        if (!fromLocation.isEmpty()) {
+            val en = fromLocation[0]
+            val currentMarker = this.mMap?.addMarker(MarkerOptions().position(latLng).title("Teste").snippet(en.getAddressLine(0)))
         }
     }
 
@@ -82,16 +91,6 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
             marker.remove()
         }
         builder.show()
-    }
-
-    @Throws(IOException::class)
-    private fun createMarker(latLng: LatLng) {
-        val gc = Geocoder(this.context.baseContext, Locale.getDefault())
-        val fromLocation = gc.getFromLocation(latLng.latitude, latLng.longitude, 1)
-        if (!fromLocation.isEmpty()) {
-            val en = fromLocation[0]
-            val currentMarker = this.mMap?.addMarker(MarkerOptions().position(latLng).title("Teste").snippet(en.getAddressLine(0)))
-        }
     }
 
     fun setAlertDialogGPS() {
@@ -113,23 +112,44 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         alertDialog.show()
     }
 
+
     fun setUpMap() {
         if (!checkPermission()) return
-
-        //setAlertDialogGPS();
-
         val provider = this.context.locationManager!!.getBestProvider(Criteria(), true)
 
-        //locationManager.requestLocationUpdates(provider, 0, 0, this.context);
         currentLocation = this.context.locationManager!!.getLastKnownLocation(provider)
 
-        val state = if (currentLocation == null) LatLng(-8.5, -34.5) else LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)
+        this.context.locationManager!!.requestLocationUpdates(provider, 0, 0f, object : LocationListener{
+            override fun onLocationChanged(p0: Location?) {
+                moveMapCamera(p0)
+            }
+            override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
 
-        mMap?.moveCamera(CameraUpdateFactory.newLatLng(state))
+            override fun onProviderEnabled(p0: String?) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
+            override fun onProviderDisabled(p0: String?) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+        })
+
+        if (currentLocation != null){
+            mMap?.moveCamera(CameraUpdateFactory.newLatLng(LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)))
+        }
+
         mMap?.animateCamera(CameraUpdateFactory.zoomTo(5f))
         mMap?.uiSettings?.isZoomControlsEnabled = true
         mMap?.uiSettings?.isMyLocationButtonEnabled = true
         mMap?.isMyLocationEnabled = true
+    }
+
+    private fun moveMapCamera(location: Location?){
+        var latLng = LatLng(location!!.getLatitude(), location!!.getLongitude())
+        Log.d("State_LAT", latLng?.toString())
+        mMap?.moveCamera(CameraUpdateFactory.newLatLng(latLng))
     }
 
     private fun checkPermission(): Boolean {

@@ -3,6 +3,7 @@ package com.culture.santos.culture
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
@@ -15,12 +16,14 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.ImageButton
 import android.widget.TextView
 
 import com.culture.santos.adapter.GoogleMapAdapter
 import com.culture.santos.adapter.GoogleSignInAdapter
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -28,7 +31,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import java.util.Timer
 import java.util.TimerTask
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     val PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 2
@@ -46,6 +49,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
     private var googleSign: GoogleSignInAdapter? = null
 
     var locationManager: LocationManager? = null
+    var googleApiClient: GoogleApiClient? = null;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +57,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
 
         locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         googleSign = GoogleSignInAdapter(this)
+
+        googleApiClient = GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build()
 
         setMapFragmentEnvironment()
     }
@@ -88,7 +98,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
+        //menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
 
@@ -112,8 +122,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
         mMap?.setAlertDialogGPS();
     }
 
-    override fun onConnectionFailed(connectionResult: ConnectionResult) {
-        Log.d("onConnectionFailed", "True")
+    override fun onConnected(p0: Bundle?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onConnectionSuspended(p0: Int) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onConnectionFailed(p0: ConnectionResult) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -164,15 +182,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.On
     private fun defineNavigationBar() {
         actionBar = supportActionBar
         actionBar?.setHomeAsUpIndicator(R.drawable.hamburguer)
-        actionBar?.setDisplayHomeAsUpEnabled(true)
-        actionBar?.setHomeButtonEnabled(true)
-
+        actionBar?.setDisplayHomeAsUpEnabled(false)
         drawerLayout = findViewById<View>(R.id.navigation_drawer_layout) as DrawerLayout
 
         navigationView = findViewById<View>(R.id.navigation_view) as NavigationView
         navegationViewHeader = navigationView!!.getHeaderView(0)
 
         setupNavigationDrawerContent(navigationView!!)
+
+        var button = findViewById<ImageButton>(R.id.button)
+
+        button.setOnClickListener (){
+            drawerLayout?.openDrawer(GravityCompat.START)
+        }
     }
 
     private fun setupNavigationDrawerContent(navigationView: NavigationView) {
