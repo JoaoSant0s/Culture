@@ -42,7 +42,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".CreateEventActivity"></activity>
+
+        <activity android:name=".EventActivity">
+            android:name=".EventActivity"
+            android:label="@string/title_activity_maps">
+            <intent-filter>
+                <action android:name="android.support.PARENT_ACTIVITY" />
+
+                <category android:name="com.culture.santos.culture.MapsActivity" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -1,5 +1,6 @@
 package com.culture.santos.culture
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -18,6 +19,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 
 import com.culture.santos.adapter.GoogleMapAdapter
 import com.culture.santos.adapter.GoogleSignInAdapter
@@ -35,6 +37,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     val PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 2
+
+    val ACTIVITY_CREATE_EVENT = 1
 
     private var drawerLayout: DrawerLayout? = null
     private var navegationViewHeader: View? = null
@@ -81,13 +85,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         defineNavigationBar()
     }
 
-    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+
         googleSign!!.handleResult(requestCode, data)
+
+        Log.d("RESULT_TAG", requestCode.toString())
 
         mMap?.handleResult(requestCode, resultCode, data)
         if (!googleSign!!.isSuccess) return
         defineUserData()
+
+        if(requestCode == ACTIVITY_CREATE_EVENT){
+            if (resultCode == Activity.RESULT_OK) {
+                Toast.makeText(this, "Result: Created", Toast.LENGTH_LONG).show()
+            }else{
+                Toast.makeText(this, "Result: Cancel", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     override fun onResume() {
@@ -206,6 +221,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 }
                 R.id.add_event -> {
                     drawerLayout?.closeDrawer(GravityCompat.START)
+                    createEventActivity()
                     return@OnNavigationItemSelectedListener true
                 }
                 R.id.remove_event -> {
@@ -219,6 +235,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             }
             true
         })
+    }
+
+    fun createEventActivity(){
+        val intent = Intent(this, EventActivity::class.java)
+        //intent.putExtra(EXTRA_MESSAGE, message)
+        startActivityForResult(intent, ACTIVITY_CREATE_EVENT);
     }
 
     fun alertDialogGPS(intent: Intent) {

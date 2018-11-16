@@ -55,7 +55,7 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         }
     }
 
-    fun handleResult(requestCode: Int, resultCode: Int, data: Intent) {
+    fun handleResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_CODE_CREATE_MARKER) {
             if (resultCode == Activity.RESULT_OK) {
                 Toast.makeText(this.context, "Result: OK", Toast.LENGTH_LONG).show()
@@ -124,15 +124,15 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
                 moveMapCamera(p0)
             }
             override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                teste()
             }
 
             override fun onProviderEnabled(p0: String?) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                teste()
             }
 
             override fun onProviderDisabled(p0: String?) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                teste()
             }
         })
 
@@ -146,9 +146,14 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         mMap?.isMyLocationEnabled = true
     }
 
+    private fun teste(){
+
+    }
+
+
     private fun moveMapCamera(location: Location?){
         var latLng = LatLng(location!!.getLatitude(), location!!.getLongitude())
-        Log.d("State_LAT", latLng?.toString())
+        //Log.d("State_LAT", latLng?.toString())
         mMap?.moveCamera(CameraUpdateFactory.newLatLng(latLng))
     }
 
