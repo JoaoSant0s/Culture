@@ -1,5 +1,6 @@
 package com.culture.santos.adapter
 
+
 import android.app.Activity
 import android.app.AlertDialog.Builder
 import android.content.Intent
@@ -7,13 +8,14 @@ import android.content.pm.PackageManager
 import android.location.Criteria
 import android.location.Geocoder
 import android.location.Location
-import android.location.LocationManager
+import android.location.LocationListener
+import android.os.Bundle
+import android.os.Debug
 import android.provider.Settings
 import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.widget.Toast
 
-import com.culture.santos.culture.CreateEventActivity
 import com.culture.santos.culture.MapsActivity
 import com.culture.santos.culture.R
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -21,32 +23,26 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.location.LocationListener
 
 import java.io.IOException
 import java.util.Locale
-import android.os.Bundle
-import com.google.android.gms.location.LocationCallback
 
 
 /**
  * Created by Ricar on 13/08/2016.
  */
-class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsActivity, locationService: String) {
-
-    private var locationManager: LocationManager? = null
+class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsActivity) {
     private var currentLocation: Location? = null
-    private var locationChangeListener : LocationListener ? = null
 
     val isEmpty: Boolean
         get() = this.mMap == null
 
     init {
-        locationManager = this.context.getSystemService(locationService) as LocationManager
-        setAlertDialogGPS()
         setUpMap()
-        setMapActions()
+        setMapEvents()
+    }
 
+    fun setMapEvents(){
         this.mMap!!.setOnMapClickListener { latLng ->
             Log.d("Click", "Event")
             markerAddEvent(latLng)
@@ -59,7 +55,7 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         }
     }
 
-    fun handleResult(requestCode: Int, resultCode: Int, data: Intent) {
+    fun handleResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_CODE_CREATE_MARKER) {
             if (resultCode == Activity.RESULT_OK) {
                 Toast.makeText(this.context, "Result: OK", Toast.LENGTH_LONG).show()
@@ -69,30 +65,12 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         }
     }
 
-
     private fun markerAddEvent(latLng: LatLng) {
-        if (this.context.state?.isAddEventState!!) return
-
         try {
             createMarker(latLng)
         } catch (e: IOException) {
             e.printStackTrace()
         }
-
-    }
-
-    private fun markerClickEvent(marker: Marker) {
-        if (this.context.state?.isRemoveEventState!!) return
-
-        val builder = Builder(this.context)
-        builder.setTitle(marker.title)
-        builder.setMessage(marker.snippet)
-        builder.setPositiveButton(R.string.remove) { dialog, id ->
-            marker.remove()
-            context.state?.setInitState()
-        }
-        builder.setNegativeButton(R.string.cancel) { dialog, id -> context.state?.setInitState() }
-        builder.show()
     }
 
     @Throws(IOException::class)
@@ -100,21 +78,23 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         val gc = Geocoder(this.context.baseContext, Locale.getDefault())
         val fromLocation = gc.getFromLocation(latLng.latitude, latLng.longitude, 1)
         if (!fromLocation.isEmpty()) {
-            this.context.tutorialAdapter?.hideAddEventTutorial()
             val en = fromLocation[0]
             val currentMarker = this.mMap?.addMarker(MarkerOptions().position(latLng).title("Teste").snippet(en.getAddressLine(0)))
-
-            val intent = Intent(this.context, CreateEventActivity::class.java)
-            this.context.eventsAdapter?.marker = currentMarker
-
-            this.context.startActivityForResult(intent, REQUEST_CODE_CREATE_MARKER)
-
-            context.state?.setInitState()
         }
     }
 
-    private fun setAlertDialogGPS() {
-        if (locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER) && locationManager!!.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) return
+    private fun markerClickEvent(marker: Marker) {
+        val builder = Builder(this.context)
+        builder.setTitle(marker.title)
+        builder.setMessage(marker.snippet)
+        builder.setPositiveButton(R.string.remove) { dialog, id ->
+            marker.remove()
+        }
+        builder.show()
+    }
+
+    fun setAlertDialogGPS() {
+        if (this.context.haveGPSandNETWORK()) return
 
         // Build the alert dialog
         val builder = Builder(this.context)
@@ -132,21 +112,49 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         alertDialog.show()
     }
 
+
     fun setUpMap() {
-        if (!locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) return
         if (!checkPermission()) return
-        val provider = locationManager!!.getBestProvider(Criteria(), true)
+        val provider = this.context.locationManager!!.getBestProvider(Criteria(), true)
 
-        //locationManager.requestLocationUpdates(provider, 0, 0, this.context);
-        currentLocation = locationManager!!.getLastKnownLocation(provider)
+        currentLocation = this.context.locationManager!!.getLastKnownLocation(provider)
 
-        val state = if (currentLocation == null) LatLng(0.0, 50.0) else LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)
+        this.context.locationManager!!.requestLocationUpdates(provider, 0, 0f, object : LocationListener{
+            override fun onLocationChanged(p0: Location?) {
+                moveMapCamera(p0)
+            }
+            override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {
+                teste()
+            }
 
-        mMap?.moveCamera(CameraUpdateFactory.newLatLng(state))
-        if (currentLocation != null) mMap?.animateCamera(CameraUpdateFactory.zoomTo(15f))
+            override fun onProviderEnabled(p0: String?) {
+                teste()
+            }
+
+            override fun onProviderDisabled(p0: String?) {
+                teste()
+            }
+        })
+
+        if (currentLocation != null){
+            mMap?.moveCamera(CameraUpdateFactory.newLatLng(LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)))
+        }
+
+        mMap?.animateCamera(CameraUpdateFactory.zoomTo(5f))
         mMap?.uiSettings?.isZoomControlsEnabled = true
         mMap?.uiSettings?.isMyLocationButtonEnabled = true
         mMap?.isMyLocationEnabled = true
+    }
+
+    private fun teste(){
+
+    }
+
+
+    private fun moveMapCamera(location: Location?){
+        var latLng = LatLng(location!!.getLatitude(), location!!.getLongitude())
+        //Log.d("State_LAT", latLng?.toString())
+        mMap?.moveCamera(CameraUpdateFactory.newLatLng(latLng))
     }
 
     private fun checkPermission(): Boolean {
@@ -163,12 +171,7 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
 
     }
 
-    private fun setMapActions() {
-
-    }
-
     companion object {
-
         private val REQUEST_CODE_CREATE_MARKER = 0x9345
     }
 }

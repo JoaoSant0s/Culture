@@ -45,7 +45,7 @@ class GoogleSignInAdapter(private val context: MapsActivity) {
         context.signIn(signInIntent, RC_SIGN_IN)
     }
 
-    fun handleResult(requestCode: Int, data: Intent) {
+    fun handleResult(requestCode: Int, data: Intent?) {
         Log.d("requestCode ", "" + RC_SIGN_IN)
         if (requestCode == RC_SIGN_IN) {
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
