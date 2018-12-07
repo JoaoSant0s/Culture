@@ -33,6 +33,7 @@ import java.util.Locale
  */
 class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsActivity) {
     private var currentLocation: Location? = null
+    private var firstMoveMapCameraValue = false;
 
     val isEmpty: Boolean
         get() = this.mMap == null
@@ -123,38 +124,32 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
             override fun onLocationChanged(p0: Location?) {
                 moveMapCamera(p0)
             }
-            override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {
-                teste()
-            }
+            override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {}
 
-            override fun onProviderEnabled(p0: String?) {
-                teste()
-            }
+            override fun onProviderEnabled(p0: String?) {}
 
-            override fun onProviderDisabled(p0: String?) {
-                teste()
-            }
+            override fun onProviderDisabled(p0: String?) {}
         })
 
         if (currentLocation != null){
-            mMap?.moveCamera(CameraUpdateFactory.newLatLng(LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)))
+            this.mMap?.moveCamera(CameraUpdateFactory.newLatLng(LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)))
         }
 
-        mMap?.animateCamera(CameraUpdateFactory.zoomTo(5f))
-        mMap?.uiSettings?.isZoomControlsEnabled = true
-        mMap?.uiSettings?.isMyLocationButtonEnabled = true
-        mMap?.isMyLocationEnabled = true
+        this.mMap?.animateCamera(CameraUpdateFactory.zoomTo(5f))
+        this.mMap?.uiSettings?.isZoomControlsEnabled = true
+        this.mMap?.uiSettings?.isMyLocationButtonEnabled = true
+        this.mMap?.isMyLocationEnabled = true
+        this.mMap?.setPadding(0, 0, 0, 150);
     }
-
-    private fun teste(){
-
-    }
-
 
     private fun moveMapCamera(location: Location?){
+        if(this.firstMoveMapCameraValue || location == null) return;
+        this.firstMoveMapCameraValue = true
+
         var latLng = LatLng(location!!.getLatitude(), location!!.getLongitude())
         //Log.d("State_LAT", latLng?.toString())
-        mMap?.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+        this.mMap?.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+        this.mMap?.animateCamera(CameraUpdateFactory.zoomTo(5f))
     }
 
     private fun checkPermission(): Boolean {
