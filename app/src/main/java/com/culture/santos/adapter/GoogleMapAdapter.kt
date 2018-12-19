@@ -5,21 +5,21 @@ import android.app.Activity
 import android.app.AlertDialog.Builder
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Criteria
-import android.location.Geocoder
-import android.location.Location
-import android.location.LocationListener
+import android.location.*
 import android.os.Bundle
 import android.os.Debug
 import android.provider.Settings
 import android.support.v4.app.ActivityCompat
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 
 import com.culture.santos.culture.MapsActivity
 import com.culture.santos.culture.R
+import com.culture.santos.module.Event
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -31,9 +31,17 @@ import java.util.Locale
 /**
  * Created by Ricar on 13/08/2016.
  */
+
+enum class MapState {
+    IDLE, SELECT_LOCATION
+}
+
 class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsActivity) {
     private var currentLocation: Location? = null
-    private var firstMoveMapCameraValue = false;
+    private var firstMoveMapCameraValue = false
+    var mapState = MapState.IDLE
+
+    var savedLocationMarker : Marker? = null
 
     val isEmpty: Boolean
         get() = this.mMap == null
@@ -43,15 +51,32 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         setMapEvents()
     }
 
+    fun setIdleLocationState(){
+        mapState = MapState.IDLE
+    }
+
+    fun setMapLocationState(){
+        mapState = MapState.SELECT_LOCATION
+    }
+
+    fun isMapLocationState(): Boolean{
+        return mapState == MapState.SELECT_LOCATION
+    }
+
     fun setMapEvents(){
         this.mMap!!.setOnMapClickListener { latLng ->
             Log.d("Click", "Event")
-            markerAddEvent(latLng)
+            if(isMapLocationState()){
+                markerAddEvent(latLng)
+            }
         }
 
         this.mMap.setOnMarkerClickListener { marker ->
             Log.d("Click", "Marker")
-            markerClickEvent(marker)
+            if(!isMapLocationState()){
+                markerClickEvent(marker)
+            }
+
             true
         }
     }
@@ -66,31 +91,57 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
         }
     }
 
+    fun removeSavedLocation(){
+        if(hasSavedLocation()) this.savedLocationMarker!!.remove()
+    }
+
+    fun hasSavedLocation(): Boolean{
+        return this.savedLocationMarker != null
+    }
+
     private fun markerAddEvent(latLng: LatLng) {
         try {
-            createMarker(latLng)
+            if(hasSavedLocation()) this.savedLocationMarker!!.remove()
+
+            this.savedLocationMarker = createMarker(latLng)
         } catch (e: IOException) {
             e.printStackTrace()
         }
     }
 
+    fun createFinalMarker(event : Event){
+        val gc = Geocoder(this.context.baseContext, Locale.getDefault())
+        val fromLocation = gc.getFromLocation(event.latitude, event.longitude, 1)
+        if (!fromLocation.isEmpty()) {
+            val en = fromLocation[0]
+            this.mMap?.addMarker(MarkerOptions().position(LatLng(event.latitude, event.longitude))
+                    .title(event.name).snippet(en.getAddressLine(0))
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)))
+        }
+    }
+
     @Throws(IOException::class)
-    private fun createMarker(latLng: LatLng) {
+    private fun createMarker(latLng: LatLng): Marker? {
         val gc = Geocoder(this.context.baseContext, Locale.getDefault())
         val fromLocation = gc.getFromLocation(latLng.latitude, latLng.longitude, 1)
         if (!fromLocation.isEmpty()) {
             val en = fromLocation[0]
-            val currentMarker = this.mMap?.addMarker(MarkerOptions().position(latLng).title("Teste").snippet(en.getAddressLine(0)))
+            val currentMarker = this.mMap?.addMarker(MarkerOptions().position(latLng)
+                    .title("Teste").snippet(en.getAddressLine(0))
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+            return currentMarker
         }
+        return null
     }
 
     private fun markerClickEvent(marker: Marker) {
         val builder = Builder(this.context)
         builder.setTitle(marker.title)
         builder.setMessage(marker.snippet)
-        builder.setPositiveButton(R.string.remove) { dialog, id ->
+        /*builder.setPositiveButton(R.string.remove) { dialog, id ->
             marker.remove()
-        }
+        }*/
+        builder.setNegativeButton(R.string.cancel) { dialog, id -> }
         builder.show()
     }
 
@@ -120,6 +171,27 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
 
         currentLocation = this.context.locationManager!!.getLastKnownLocation(provider)
 
+        var localMap = this.mMap
+
+        this.context.locationManager!!.registerGnssStatusCallback(object : GnssStatus.Callback() {
+
+            override fun onStarted() {
+                context.blockScreen!!.visibility = View.INVISIBLE
+
+                if (!checkPermission()) return
+
+                localMap?.animateCamera(CameraUpdateFactory.zoomTo(5f))
+            }
+
+            override fun onStopped() {
+                context.blockScreen!!.visibility = View.VISIBLE
+            }
+
+            override fun onFirstFix(ttffMillis: Int) {}
+
+            override fun onSatelliteStatusChanged(status : GnssStatus?) {}
+        })
+
         this.context.locationManager!!.requestLocationUpdates(provider, 0, 0f, object : LocationListener{
             override fun onLocationChanged(p0: Location?) {
                 moveMapCamera(p0)
@@ -135,7 +207,6 @@ class GoogleMapAdapter(private val mMap: GoogleMap?, private val context: MapsAc
             this.mMap?.moveCamera(CameraUpdateFactory.newLatLng(LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)))
         }
 
-        this.mMap?.animateCamera(CameraUpdateFactory.zoomTo(5f))
         this.mMap?.uiSettings?.isZoomControlsEnabled = true
         this.mMap?.uiSettings?.isMyLocationButtonEnabled = true
         this.mMap?.isMyLocationEnabled = true

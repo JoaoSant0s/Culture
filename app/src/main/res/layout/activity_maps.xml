@@ -53,49 +53,163 @@
             android:id="@+id/menu_calendar_screen"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="20dp"
-            android:layout_marginTop="45dp"
-            android:layout_marginRight="20dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="65dp"
+            android:layout_marginRight="10dp"
             android:layout_marginBottom="65dp"
             android:visibility="invisible">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Calendar" />
+            <ImageView
+                android:id="@+id/menu_calendar_background"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:srcCompat="@color/common_google_signin_btn_text_light_default" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <Button
+                    android:id="@+id/btn_create_event"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableLeft="@android:drawable/ic_menu_add"
+                    android:text="Criar evento" />
+
+                <Button
+                    android:id="@+id/btn_my_events"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableLeft="?android:attr/actionModePasteDrawable"
+                    android:text="Meus eventos" />
+
+                <Button
+                    android:id="@+id/btn_favorite_events"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableLeft="@android:drawable/btn_star"
+                    android:text="Eventos Favoritos" />
+
+            </LinearLayout>
+
         </FrameLayout>
 
         <FrameLayout
             android:id="@+id/menu_search_screen"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="20dp"
-            android:layout_marginTop="45dp"
-            android:layout_marginRight="20dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="65dp"
+            android:layout_marginRight="10dp"
             android:layout_marginBottom="65dp"
             android:visibility="invisible">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Menu" />
+            <ImageView
+                android:id="@+id/menu_search_background"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:srcCompat="@color/common_google_signin_btn_text_light_default" />
+
         </FrameLayout>
 
         <android.support.design.widget.BottomNavigationView
+            android:id="@+id/bottom_navigation_menu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginBottom="5dp"
-            app:itemBackground="?attr/colorPrimaryDark"
+            app:elevation="0dp"
+            app:itemBackground="?android:attr/colorBackground"
             app:itemIconTint="@drawable/selector_bottombar_item"
             app:itemTextColor="@drawable/selector_bottombar_text"
             app:menu="@menu/bottombar_menu">
 
         </android.support.design.widget.BottomNavigationView>
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/block_screen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible">
+
+        <ImageView
+            android:id="@+id/block_screen_background"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:srcCompat="@color/common_google_signin_btn_text_light_pressed" />
+
+        <ImageView
+            android:id="@+id/block_screen_panel"
+            android:layout_width="304dp"
+            android:layout_height="@android:dimen/thumbnail_height"
+            android:layout_gravity="top|center_vertical|center_horizontal"
+            android:layout_marginTop="@dimen/action_bar_offset"
+            app:srcCompat="@android:color/darker_gray" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_vertical|center_horizontal"
+            android:layout_marginTop="@dimen/showcase_radius"
+            android:fontFamily="monospace"
+            android:text="Ative o serviço de localização!"
+            android:textAlignment="center"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/location_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible">
+
+        <ImageView
+            android:layout_width="239dp"
+            android:layout_height="132dp"
+            android:layout_gravity="top|center_vertical|center_horizontal"
+            android:layout_marginTop="@dimen/action_bar_offset"
+            app:srcCompat="@android:color/darker_gray" />
+
+        <TextView
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_vertical|center_horizontal"
+            android:layout_marginTop="@dimen/showcase_radius"
+            android:fontFamily="monospace"
+            android:text="Escolha o local para o evento"
+            android:textAlignment="center"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/button_create_event"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_vertical|end"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginBottom="150dp"
+            android:backgroundTint="@android:color/holo_green_dark"
+            android:elevation="0dp"
+            android:text="Selecionar" />
+
+        <Button
+            android:id="@+id/button_cancel_event"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_vertical"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:layout_marginBottom="150dp"
+            android:backgroundTint="@android:color/holo_red_light"
+            android:text="Cancelar" />
     </FrameLayout>
 
     <android.support.design.widget.NavigationView

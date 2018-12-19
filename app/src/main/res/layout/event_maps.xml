@@ -39,14 +39,15 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingTop="10dp">
 
         <EditText
             android:id="@+id/edit_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:hint="Event Name"
+            android:hint="Nome do evento"
             android:inputType="textPersonName" />
 
         <EditText
@@ -54,36 +55,80 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:hint="Event Localization"
+            android:hint="Local do evento"
+            android:focusable="false"
             android:inputType="textPersonName" />
 
-        <TextView
-            android:id="@+id/textView2"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="5dp"
-            android:layout_marginBottom="5dp"
-            android:text="Event Date" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/editText"
+            <EditText
+                android:id="@+id/text_date_start"
+                android:layout_width="0dp"
+                android:layout_weight=".65"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginBottom="5dp"
+                android:clickable="true"
+                android:focusable="false"
+                android:hint="Data inicial do evento" />
+
+            <EditText
+                android:id="@+id/text_time_start"
+                android:layout_width="0dp"
+                android:layout_weight=".35"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginBottom="5dp"
+                android:clickable="true"
+                android:focusable="false"
+                android:inputType="datetime" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginRight="5dp"
-            android:layout_marginBottom="5dp"
-            android:ems="10"
-            android:inputType="date" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/text_date_end"
+                android:layout_width="0dp"
+                android:layout_weight=".65"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginBottom="5dp"
+                android:clickable="true"
+                android:focusable="false"
+                android:hint="Data final do evento" />
+
+            <EditText
+                android:id="@+id/text_time_end"
+                android:layout_width="0dp"
+                android:layout_weight=".35"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginBottom="5dp"
+                android:clickable="true"
+                android:focusable="false"
+                android:inputType="datetime" />
+        </LinearLayout>
 
         <EditText
             android:id="@+id/edit_description"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:hint="Event Description"
+            android:hint="Descrição do evento"
             android:inputType="textPersonName" />
 
         <EditText
@@ -91,7 +136,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:hint="Event External Links"
+            android:hint="Links externos"
             android:inputType="textPersonName" />
 
     </LinearLayout>

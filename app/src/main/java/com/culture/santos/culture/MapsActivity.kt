@@ -1,13 +1,15 @@
 package com.culture.santos.culture
 
 import android.app.Activity
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
+import android.support.design.internal.BottomNavigationItemView
+import android.support.design.widget.BottomNavigationView
 import android.support.design.widget.NavigationView
 import android.support.v4.view.GravityCompat
 import android.support.v4.widget.DrawerLayout
@@ -16,13 +18,14 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
+import com.culture.santos.adapter.FirebaseAdapter
 
 import com.culture.santos.adapter.GoogleMapAdapter
 import com.culture.santos.adapter.GoogleSignInAdapter
+import com.culture.santos.module.Event
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.LocationServices
@@ -33,7 +36,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import java.util.Timer
 import java.util.TimerTask
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, BottomNavigationView.OnNavigationItemReselectedListener, BottomNavigationView.OnNavigationItemSelectedListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     val PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 2
@@ -53,11 +56,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     private var googleSign: GoogleSignInAdapter? = null
 
     var locationManager: LocationManager? = null
-    var googleApiClient: GoogleApiClient? = null;
+    var googleApiClient: GoogleApiClient? = null
+
+    private var bottomView : BottomNavigationView? = null
+    private var calendarFrameLayout : FrameLayout? = null
+    private var searchFrameLayout : FrameLayout? = null
+    private var locationFrameLayout : FrameLayout? = null
+
+    var blockScreen: FrameLayout? = null;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+
+        FirebaseAdapter.start(this)
 
         locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         googleSign = GoogleSignInAdapter(this)
@@ -69,6 +81,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 .build()
 
         setMapFragmentEnvironment()
+    }
+
+    fun createMarkets(events: List<Event>){
+        for (event in events){
+            mMap!!.createFinalMarker(event)
+        }
     }
 
     fun haveGPSandNETWORK(): Boolean {
@@ -83,6 +101,121 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     override fun onStart() {
         super.onStart()
         defineNavigationBar()
+        setFrameFragmentEvents()
+        setSelectEventLocation()
+    }
+
+    private fun setSelectEventLocation(){
+        locationFrameLayout = findViewById<View>(R.id.location_panel) as FrameLayout
+
+        var buttonCreateEvent = findViewById<Button>(R.id.button_create_event)
+        var buttonCancelEvent = findViewById<Button>(R.id.button_cancel_event)
+
+        buttonCreateEvent.setOnClickListener (){
+            if(mMap!!.hasSavedLocation()){
+                bottomView!!.visibility = View.VISIBLE
+                createEventActivity()
+            }else{
+                Toast.makeText(this, "Selecione um local", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        buttonCancelEvent.setOnClickListener (){
+            disableLocationScreen();
+        }
+    }
+
+    private fun disableLocationScreen(){
+        this.mMap!!.setIdleLocationState()
+        mMap!!.removeSavedLocation()
+        locationFrameLayout!!.visibility = View.INVISIBLE
+        bottomView!!.visibility = View.VISIBLE
+    }
+
+    private fun setFrameFragmentEvents(){
+        bottomView = findViewById<View>(R.id.bottom_navigation_menu) as BottomNavigationView
+        calendarFrameLayout = findViewById<View>(R.id.menu_calendar_screen) as FrameLayout
+        searchFrameLayout = findViewById<View>(R.id.menu_search_screen) as FrameLayout
+
+        bottomView!!.setOnNavigationItemSelectedListener (this)
+        bottomView!!.setOnNavigationItemReselectedListener (this)
+
+        setCalendarClickEvents();
+        setSearchClickEvents();
+
+        calendarFrameLayout = findViewById<View>(R.id.menu_calendar_screen) as FrameLayout
+
+        blockScreen = findViewById<View>(R.id.block_screen) as FrameLayout
+
+        blockScreen!!.setOnTouchListener(object : View.OnTouchListener {
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                return true;
+            }
+        })
+    }
+
+    private fun setCalendarClickEvents(){
+
+        var button = findViewById<Button>(R.id.btn_create_event)
+
+        button.setOnClickListener (){
+            this.mMap!!.setMapLocationState()
+            bottomView!!.visibility = View.INVISIBLE
+            locationFrameLayout!!.visibility = View.VISIBLE
+            var item = findViewById<View>(R.id.menu_map_access) as BottomNavigationItemView
+            item.setChecked(true)
+            changeCalendarNavegationItemReselected()
+        }
+    }
+
+    private fun setSearchClickEvents(){
+
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.menu_map_access -> {
+                calendarFrameLayout!!.visibility = View.INVISIBLE
+                searchFrameLayout!!.visibility = View.INVISIBLE
+            }
+            R.id.menu_search_access -> {
+                calendarFrameLayout!!.visibility = View.INVISIBLE
+                searchFrameLayout!!.visibility = View.VISIBLE
+            }
+            R.id.menu_calendar_access -> {
+                calendarFrameLayout!!.visibility = View.VISIBLE
+                searchFrameLayout!!.visibility = View.INVISIBLE
+            }
+        }
+        return true
+    }
+
+    override fun onNavigationItemReselected(item: MenuItem) {
+        when (item.itemId) {
+            R.id.menu_map_access -> {}
+            R.id.menu_search_access -> {
+                changeSearchNavegationItemReselected()
+            }
+            R.id.menu_calendar_access -> {
+                changeCalendarNavegationItemReselected()
+            }
+        }
+    }
+
+    private fun changeSearchNavegationItemReselected(){
+        if(searchFrameLayout!!.visibility == View.VISIBLE){
+            searchFrameLayout!!.visibility = View.INVISIBLE
+        }else{
+            searchFrameLayout!!.visibility = View.VISIBLE
+        }
+    }
+
+    private fun changeCalendarNavegationItemReselected(){
+        if(calendarFrameLayout!!.visibility == View.VISIBLE){
+            calendarFrameLayout!!.visibility = View.INVISIBLE
+        }else{
+            calendarFrameLayout!!.visibility = View.VISIBLE
+        }
     }
 
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -93,23 +226,27 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         Log.d("RESULT_TAG", requestCode.toString())
 
         mMap?.handleResult(requestCode, resultCode, data)
+
+        if (googleSign!!.isSuccess) {
+            FirebaseAdapter.marketsCallbacks(::createMarkets)
+        }
+
         if (!googleSign!!.isSuccess) return
         defineUserData()
 
         if(requestCode == ACTIVITY_CREATE_EVENT){
             if (resultCode == Activity.RESULT_OK) {
-                Toast.makeText(this, "Result: Created", Toast.LENGTH_LONG).show()
+                if(data == null) return
+
+                var event = data.getParcelableExtra<Event>("EXTRA_REPLY")
+                disableLocationScreen()
+                //mMap!!.createFinalMarker(event!!)
+
+                Toast.makeText(this, "Evento Criado", Toast.LENGTH_LONG).show()
             }else{
-                Toast.makeText(this, "Result: Cancel", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Processo cancelado", Toast.LENGTH_LONG).show()
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (mMap == null) return
-        if (!mMap?.isEmpty!!) return
-        //startTimer()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -134,7 +271,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = GoogleMapAdapter(googleMap, this)
-        mMap?.setAlertDialogGPS();
     }
 
     override fun onConnected(p0: Bundle?) {
@@ -154,7 +290,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
                 if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mMap?.setUpMap()
-                    mMap?.setAlertDialogGPS()
+                    //mMap?.setAlertDialogGPS()
                 } else {
                     Log.d("MUST ACCEPT", "MUST ACCEPT")
                 }
@@ -163,7 +299,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION -> {
                 if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mMap?.setUpMap()
-                    mMap?.setAlertDialogGPS()
+                    //mMap?.setAlertDialogGPS()
                 } else {
                     Log.d("MUST ACCEPT", "MUST ACCEPT")
                 }
@@ -203,8 +339,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         navigationView = findViewById<View>(R.id.navigation_view) as NavigationView
         navegationViewHeader = navigationView!!.getHeaderView(0)
 
-        setupNavigationDrawerContent(navigationView!!)
-
         var button = findViewById<ImageButton>(R.id.button)
 
         button.setOnClickListener (){
@@ -212,61 +346,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         }
     }
 
-    private fun setupNavigationDrawerContent(navigationView: NavigationView) {
-        navigationView.setNavigationItemSelectedListener(NavigationView.OnNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.list_events -> {
-                    drawerLayout?.closeDrawer(GravityCompat.START)
-                    return@OnNavigationItemSelectedListener true
-                }
-                R.id.add_event -> {
-                    drawerLayout?.closeDrawer(GravityCompat.START)
-                    createEventActivity()
-                    return@OnNavigationItemSelectedListener true
-                }
-                R.id.remove_event -> {
-                    drawerLayout?.closeDrawer(GravityCompat.START)
-                    return@OnNavigationItemSelectedListener true
-                }
-                R.id.edit_event -> {
-                    drawerLayout?.closeDrawer(GravityCompat.START)
-                    return@OnNavigationItemSelectedListener true
-                }
-            }
-            true
-        })
-    }
-
     fun createEventActivity(){
         val intent = Intent(this, EventActivity::class.java)
-        //intent.putExtra(EXTRA_MESSAGE, message)
+        intent.putExtra("EXTRA_MESSAGE", this.mMap!!.savedLocationMarker!!.snippet)
+        //intent.putExtra("EXTRA_MESSAGE_1",)
+        intent.putExtra("EXTRA_MESSAGE_2", this.mMap!!.savedLocationMarker!!.position)
         startActivityForResult(intent, ACTIVITY_CREATE_EVENT);
     }
 
     fun alertDialogGPS(intent: Intent) {
         startActivity(intent)
     }
-
-    private fun setMapActions() {}
-
-    private fun startTimer() {
-        timer = Timer()
-        initializeTimerTask()
-        timer!!.schedule(timerTask, 1000, 2000) //
-    }
-
-    private fun initializeTimerTask() {
-        timerTask = object : TimerTask() {
-            override fun run() {
-                //use a handler to run a toast that shows the current timestamp
-                handler.post {
-                    mMap!!.setUpMap()
-                    timer!!.cancel()
-                    timerTask!!.cancel()
-                }
-            }
-        }
-    }
-
-
 }

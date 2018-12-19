@@ -5,19 +5,19 @@
     <item
         android:id="@+id/menu_map_access"
         android:icon="@android:drawable/ic_menu_mapmode"
-        android:title="Mapa"
-        app:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/menu_search_access"
-        android:icon="@android:drawable/ic_menu_search"
-        android:title="Procurar"
+        android:title="@string/menu_1"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/menu_calendar_access"
         android:icon="@android:drawable/ic_menu_my_calendar"
-        android:title="Eventos"
+        android:title="@string/menu_2"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_search_access"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="@string/menu_3"
         app:showAsAction="ifRoom" />
 
 </menu>

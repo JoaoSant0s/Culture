@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Culture</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_maps">Cultura</string>
 
     <string name="action_tutorial">Tutorial</string>
     <string name="action_passeata">Map</string>
@@ -18,4 +18,8 @@
     <string name="menu">&#60;</string>
 
     <string name="checkable">...</string>
+
+    <string name="menu_1">Mapa</string>
+    <string name="menu_2">Eventos</string>
+    <string name="menu_3">Procurar</string>
 </resources>

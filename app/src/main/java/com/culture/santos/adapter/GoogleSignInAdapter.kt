@@ -4,6 +4,7 @@ import android.content.Intent
 import android.util.Log
 
 import com.culture.santos.culture.MapsActivity
+import com.culture.santos.culture.R
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -29,6 +30,7 @@ class GoogleSignInAdapter(private val context: MapsActivity) {
 
     private fun setGoogleEnviroment() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(this.context.getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build()
 
@@ -56,6 +58,7 @@ class GoogleSignInAdapter(private val context: MapsActivity) {
     private fun handleSignInResult(result: GoogleSignInResult) {
         if (result.isSuccess) {
             currentAccount = result.signInAccount
+            FirebaseAdapter.firebaseAuthWithGoogle(currentAccount)
         } else {
             currentAccount = null
             Log.d("Error", "Erro in login")

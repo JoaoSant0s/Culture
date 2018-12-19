@@ -8,26 +8,4 @@
             android:title="Favorite Events" />
     </group>
 
-    <item android:title="..."
-        android:id="@+id/header_menu">
-        <menu>
-            <item
-                android:id="@+id/list_events"
-                android:title="Old Events" />
-            <item
-                android:id="@+id/add_event"
-                android:title="Add Event" />
-
-            <item
-                android:id="@+id/remove_event"
-                android:title="Remove Event" />
-            <item
-                android:id="@+id/edit_event"
-                android:title="Edit Event" />
-        </menu>
-    </item>
-
-
-
-
 </menu>
